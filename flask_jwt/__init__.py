@@ -28,7 +28,7 @@ _jwt = LocalProxy(lambda: current_app.extensions['jwt'])
 
 CONFIG_DEFAULTS = {
     'JWT_DEFAULT_REALM': 'Login Required',
-    'JWT_AUTH_METHOD': 'JSON',
+    'JWT_AUTH_REQUEST_TYPE': 'JSON',
     'JWT_AUTH_URL_RULE': '/auth',
     'JWT_AUTH_ENDPOINT': 'jwt',
     'JWT_AUTH_USERNAME_KEY': 'username',
@@ -112,14 +112,12 @@ def _default_request_handler():
 
 
 def _default_auth_request_handler():
-    method = current_app.config.get('JWT_AUTH_METHOD')
-    if method == 'JSON':
-        data = request.get_json(silent=True)
-    elif method == 'POST':
-        data = request.form
+    request_type = current_app.config.get('JWT_AUTH_REQUEST_TYPE')
 
-    if not data:
-        raise JWTError('Bad Request', 'Invalid request method')
+    if request_type == 'JSON':
+        data = request.get_json() or {}
+    elif request_type == 'FORM':
+        data = request.form or {}
 
     username = data.get(current_app.config.get('JWT_AUTH_USERNAME_KEY'), None)
     password = data.get(current_app.config.get('JWT_AUTH_PASSWORD_KEY'), None)
